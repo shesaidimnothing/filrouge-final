@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+'use client';
 
-function Register() {
+import { useState } from 'react';
+import { useNavigate, BrowserRouter } from 'react-router-dom';
+import { useAuth, AuthProvider } from '../contexts/AuthContext';
+
+function RegisterContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -59,6 +61,33 @@ function Register() {
         </button>
       </form>
     </div>
+  );
+}
+
+// Composant pour le rendu côté serveur qui ne dépend pas de useNavigate
+function RegisterSSR() {
+  return (
+    <div className="container mx-auto mt-8 max-w-md">
+      <h2 className="text-2xl font-bold mb-4">Inscription</h2>
+      <p>Chargement du formulaire...</p>
+    </div>
+  );
+}
+
+function Register() {
+  // Vérifier si window est défini (côté client)
+  const isClient = typeof window !== 'undefined';
+
+  return (
+    <AuthProvider>
+      {isClient ? (
+        <BrowserRouter>
+          <RegisterContent />
+        </BrowserRouter>
+      ) : (
+        <RegisterSSR />
+      )}
+    </AuthProvider>
   );
 }
 

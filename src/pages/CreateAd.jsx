@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+'use client';
 
-function CreateAd() {
+import { useState } from 'react';
+import { useNavigate, BrowserRouter } from 'react-router-dom';
+import { useAuth, AuthProvider } from '../contexts/AuthContext';
+
+function CreateAdContent() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -75,6 +77,33 @@ function CreateAd() {
         </button>
       </form>
     </div>
+  );
+}
+
+// Composant pour le rendu côté serveur qui ne dépend pas de useNavigate
+function CreateAdSSR() {
+  return (
+    <div className="container mx-auto mt-8 max-w-md">
+      <h2 className="text-2xl font-bold mb-4">Créer une annonce</h2>
+      <p>Chargement du formulaire...</p>
+    </div>
+  );
+}
+
+function CreateAd() {
+  // Vérifier si window est défini (côté client)
+  const isClient = typeof window !== 'undefined';
+
+  return (
+    <AuthProvider>
+      {isClient ? (
+        <BrowserRouter>
+          <CreateAdContent />
+        </BrowserRouter>
+      ) : (
+        <CreateAdSSR />
+      )}
+    </AuthProvider>
   );
 }
 

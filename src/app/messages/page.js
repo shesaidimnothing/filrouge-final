@@ -1,100 +1,143 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSearchParams } from 'next/navigation';
-import { io } from 'socket.io-client';
 import Link from 'next/link';
 
-let socket;
-
-export default function Messages() {
+// Composant client qui utilise useSearchParams
+function MessagesClient() {
   const [conversations, setConversations] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState('');
+  const [socket, setSocket] = useState(null);
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const initialUserId = searchParams.get('userId');
 
   useEffect(() => {
-    if (!socket && user) {
-      socket = io('http://localhost:3000', {
-        path: '/api/socketio',
-        transports: ['websocket'],
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        autoConnect: true,
-        timeout: 20000
-      });
+    // Importer socket.io-client dynamiquement pour éviter les problèmes côté serveur
+    const initSocket = async () => {
+      if (typeof window !== 'undefined' && user && !socket) {
+        const { io } = await import('socket.io-client');
+        const newSocket = io('http://localhost:3000', {
+          path: '/api/socketio',
+          transports: ['websocket'],
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000,
+          autoConnect: true,
+          timeout: 20000
+        });
 
-      socket.on('connect', () => {
-        console.log('Connected to WebSocket');
-        socket.emit('authenticate', user.id);
-        socket.emit('getConversations');
-      });
+        newSocket.on('connect', () => {
+          console.log('Connected to WebSocket');
+          newSocket.emit('authenticate', user.id);
+        });
 
-      socket.on('conversations', (data) => {
-        console.log('Received conversations:', data);
-        setConversations(Array.isArray(data) ? data : []);
-      });
+        newSocket.on('conversations', (data) => {
+          console.log('Received conversations:', data);
+          setConversations(Array.isArray(data) ? data : []);
+        });
 
-      socket.on('messages', (receivedMessages) => {
-        console.log('Received messages:', receivedMessages);
-        setMessages(receivedMessages);
-      });
+        newSocket.on('messages', (receivedMessages) => {
+          console.log('Received messages:', receivedMessages);
+          const sortedMessages = receivedMessages.sort((a, b) => 
+            new Date(a.createdAt) - new Date(b.createdAt)
+          );
+          setMessages(sortedMessages);
+        });
 
-      socket.on('messageSent', (message) => {
-        console.log('Message sent:', message);
-        setMessages(prev => [...prev, message]);
-      });
+        newSocket.on('messageSent', (message) => {
+          console.log('Message sent:', message);
+          if (selectedUser && 
+              (message.senderId === selectedUser.userId || 
+               message.receiverId === selectedUser.userId)) {
+            setMessages(prev => [...prev, message].sort((a, b) => 
+              new Date(a.createdAt) - new Date(b.createdAt)
+            ));
+          }
+          updateConversationWithNewMessage(message, newSocket);
+        });
 
-      socket.on('messageReceived', (message) => {
-        console.log('Message received:', message);
-        if (selectedUser && 
-            (message.senderId === selectedUser.userId || 
-             message.receiverId === selectedUser.userId)) {
-          setMessages(prev => [...prev, message]);
-        }
-        if (!selectedUser || selectedUser.userId !== message.senderId) {
-          console.log('Nouveau message reçu de:', message.sender.name);
-        }
-      });
+        newSocket.on('messageReceived', (message) => {
+          console.log('Message received:', message);
+          if (selectedUser && 
+              (message.senderId === selectedUser.userId || 
+               message.receiverId === selectedUser.userId)) {
+            setMessages(prev => [...prev, message].sort((a, b) => 
+              new Date(a.createdAt) - new Date(b.createdAt)
+            ));
+          }
+          updateConversationWithNewMessage(message, newSocket);
+        });
 
-      socket.on('error', (error) => {
-        console.error('Erreur WebSocket:', error);
-        setError(error.message);
-      });
-    }
+        newSocket.on('error', (error) => {
+          console.error('Erreur WebSocket:', error);
+          setError(error.message);
+        });
+
+        setSocket(newSocket);
+      }
+    };
+
+    initSocket();
 
     return () => {
       if (socket) {
         socket.disconnect();
-        socket = null;
+        setSocket(null);
       }
     };
-  }, [user]);
+  }, [user, selectedUser]);
+
+  const updateConversationWithNewMessage = (message, currentSocket) => {
+    if (!user) return;
+    
+    setConversations(prevConversations => {
+      const otherUserId = message.senderId === user.id ? message.receiverId : message.senderId;
+      const conversationIndex = prevConversations.findIndex(conv => 
+        (conv.sender?.id === otherUserId && conv.receiver?.id === user.id) ||
+        (conv.sender?.id === user.id && conv.receiver?.id === otherUserId)
+      );
+
+      const newConversations = [...prevConversations];
+
+      if (conversationIndex !== -1) {
+        newConversations[conversationIndex] = {
+          ...newConversations[conversationIndex],
+          content: message.content,
+          createdAt: message.createdAt
+        };
+
+        if (conversationIndex > 0) {
+          const [updatedConv] = newConversations.splice(conversationIndex, 1);
+          newConversations.unshift(updatedConv);
+        }
+      }
+
+      return newConversations;
+    });
+  };
 
   useEffect(() => {
     if (socket && selectedUser) {
-      console.log('Fetching messages for user:', selectedUser.userId);
       socket.emit('getMessages', { otherUserId: selectedUser.userId });
-      socket.emit('markAsRead', { senderId: selectedUser.userId });
     }
-  }, [selectedUser]);
+  }, [selectedUser, socket]);
 
   useEffect(() => {
-    if (initialUserId && socket) {
+    if (initialUserId && socket && user) {
       const userId = parseInt(initialUserId);
       const existingConv = conversations.find(conv => 
-        conv.sender.id === userId || conv.receiver.id === userId
+        conv.sender?.id === userId || conv.receiver?.id === userId
       );
       
       if (existingConv) {
         setSelectedUser({
           userId,
-          userName: existingConv.sender.id === user.id ? existingConv.receiver.name : existingConv.sender.name
+          userName: existingConv.sender?.id === user.id ? existingConv.receiver?.name : existingConv.sender?.name
         });
       } else {
         socket.emit('initConversation', { userId });
@@ -143,6 +186,8 @@ export default function Messages() {
             {conversations.map((conv) => {
               const isUserSender = conv.senderId === user.id;
               const otherUser = isUserSender ? conv.receiver : conv.sender;
+              if (!otherUser) return null;
+              
               return (
                 <div
                   key={conv.id}
@@ -215,64 +260,48 @@ export default function Messages() {
                           message.senderId === parseInt(user.id) ? 'text-blue-100' : 'text-gray-500'
                         }`}
                       >
-                        {new Date(message.createdAt).toLocaleString('fr-FR', {
+                        {new Date(message.createdAt).toLocaleTimeString([], {
                           hour: '2-digit',
-                          minute: '2-digit',
-                          day: 'numeric',
-                          month: 'short'
+                          minute: '2-digit'
                         })}
-                        {message.senderId === parseInt(user.id) && (
-                          <span className="ml-2">
-                            {message.read ? '✓✓' : '✓'}
-                          </span>
-                        )}
                       </div>
                     </div>
-
-                    {/* Avatar et nom pour les messages envoyés - à droite */}
-                    {message.senderId === parseInt(user.id) && (
-                      <div className="flex flex-col items-end">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                          <span className="text-sm font-medium text-blue-600">
-                            {user.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <span className="text-xs text-gray-500 mt-1">
-                          Vous
-                        </span>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
 
-              {/* Zone de saisie du message */}
-              <form onSubmit={sendMessage} className="p-4 border-t">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Écrivez votre message..."
-                    className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!newMessage.trim()}
-                    className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Envoyer
-                  </button>
-                </div>
+              <form onSubmit={sendMessage} className="p-4 border-t flex gap-2">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Écrivez votre message..."
+                  className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                >
+                  Envoyer
+                </button>
               </form>
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-500">
-              Sélectionnez une conversation pour commencer à discuter
+              <p>Sélectionnez une conversation pour commencer à discuter</p>
             </div>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+// Composant principal qui enveloppe le client dans Suspense
+export default function Messages() {
+  return (
+    <Suspense fallback={<div className="text-center py-10">Chargement des messages...</div>}>
+      <MessagesClient />
+    </Suspense>
   );
 }

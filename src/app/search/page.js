@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function SearchPage() {
+// Composant client qui utilise useSearchParams
+function SearchClient() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
@@ -61,5 +62,14 @@ export default function SearchPage() {
         </p>
       )}
     </div>
+  );
+}
+
+// Composant principal qui enveloppe le client dans Suspense
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-10">Chargement de la recherche...</div>}>
+      <SearchClient />
+    </Suspense>
   );
 } 
