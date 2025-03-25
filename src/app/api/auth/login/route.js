@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import prisma from '@/utils/prisma';
+import { cookies } from 'next/headers';
 
 export async function POST(request) {
   try {
@@ -47,6 +48,16 @@ export async function POST(request) {
     }
 
     const { password: _, ...userWithoutPassword } = user;
+    
+    // Définir un cookie HTTP pour l'authentification
+    const cookieStore = cookies();
+    cookieStore.set('userData', JSON.stringify(userWithoutPassword), {
+      httpOnly: false,  // Permettre l'accès JavaScript
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 1 semaine
+      sameSite: 'strict'
+    });
+    
     return new NextResponse(
       JSON.stringify({ 
         user: userWithoutPassword,

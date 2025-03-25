@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -27,6 +27,18 @@ export default function CreateAdForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+    }
+  }, [user, router]);
+
+  useEffect(() => {
+    if (user) {
+      document.cookie = `userData=${JSON.stringify(user)};path=/;max-age=${60 * 60 * 24 * 7}`;
+    }
+  }, [user]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -114,6 +126,7 @@ export default function CreateAdForm() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           title,
           description,
@@ -139,7 +152,6 @@ export default function CreateAdForm() {
   };
 
   if (!user) {
-    router.push('/login');
     return null;
   }
 

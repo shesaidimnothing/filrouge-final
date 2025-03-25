@@ -77,7 +77,15 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+    }
     updateUser(null);
     router.push('/login');
   };
