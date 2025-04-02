@@ -34,7 +34,12 @@ function MessagesContent() {
 
   const fetchConversations = async () => {
     try {
-      const response = await fetch('/api/messages/conversations');
+      const response = await fetch('/api/messages/conversations', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
       if (!response.ok) {
         throw new Error('Erreur lors du chargement des conversations');
       }
@@ -53,7 +58,12 @@ function MessagesContent() {
 
   const fetchMessages = async (otherUserId) => {
     try {
-      const response = await fetch(`/api/messages/${otherUserId}`);
+      const response = await fetch(`/api/messages/${otherUserId}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
       if (!response.ok) {
         throw new Error('Erreur lors du chargement des messages');
       }
@@ -75,6 +85,7 @@ function MessagesContent() {
     try {
       const response = await fetch('/api/messages', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
