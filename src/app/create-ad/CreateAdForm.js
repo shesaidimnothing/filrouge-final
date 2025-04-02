@@ -126,22 +126,36 @@ export default function CreateAdForm() {
         }
       }
 
+      console.log('Tentative d\'envoi de la requête à:', '/api/ads');
+      console.log('Données à envoyer:', {
+        title,
+        description,
+        price: parseFloat(price),
+        category,
+        imageUrl
+      });
+
       const response = await fetch('/api/ads', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           title,
           description,
           price: parseFloat(price),
           category,
-          userId: user.id,
           imageUrl
         }),
       });
 
+      console.log('Statut de la réponse:', response.status);
+      console.log('Headers de la réponse:', Object.fromEntries(response.headers.entries()));
+
       const data = await response.json();
+      console.log('Données reçues:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Une erreur est survenue');

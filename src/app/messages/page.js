@@ -83,20 +83,31 @@ function MessagesContent() {
     if (!user || !newMessage.trim() || !selectedUser) return;
 
     try {
+      // Trouver le dernier message pour obtenir l'adId
+      const lastMessage = messages[messages.length - 1];
+      if (!lastMessage) {
+        throw new Error('Aucun message trouvé dans cette conversation');
+      }
+
+      // Si l'adId n'est pas disponible, on envoie le message sans adId
+      const messageData = {
+        content: newMessage,
+        receiverId: parseInt(selectedUser.userId),
+        ...(lastMessage.adId && { adId: lastMessage.adId })
+      };
+
       const response = await fetch('/api/messages', {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          content: newMessage,
-          receiverId: parseInt(selectedUser.userId)
-        }),
+        body: JSON.stringify(messageData),
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors de l\'envoi du message');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de l\'envoi du message');
       }
 
       const message = await response.json();

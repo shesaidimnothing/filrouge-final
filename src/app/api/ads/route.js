@@ -7,7 +7,7 @@ export async function POST(request) {
     console.log('Début de la requête POST');
 
     // Récupérer les cookies pour vérifier l'authentification
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const userDataCookie = cookieStore.get('userData');
     console.log('Cookie userData:', userDataCookie?.value);
 
@@ -26,16 +26,16 @@ export async function POST(request) {
     const body = await request.json();
     console.log('Données reçues:', JSON.stringify(body, null, 2));
 
-    const { title, description, price, category, userId, imageUrl } = body;
+    const { title, description, price, category, imageUrl } = body;
 
     // Vérifier que tous les champs requis sont présents
-    if (!title || !description || !price || !category || !userId) {
-      console.log('Champs manquants:', { title, description, price, category, userId });
+    if (!title || !description || !price || !category) {
+      console.log('Champs manquants:', { title, description, price, category });
       return new NextResponse(
         JSON.stringify({ 
           success: false, 
           error: 'Tous les champs sont requis',
-          receivedData: { title, description, price, category, userId }
+          receivedData: { title, description, price, category }
         }),
         { 
           status: 400,
@@ -44,9 +44,14 @@ export async function POST(request) {
       );
     }
 
+    // Récupérer l'ID de l'utilisateur depuis le cookie
+    const userData = JSON.parse(userDataCookie.value);
+    const userId = userData.id;
+    console.log('ID de l\'utilisateur:', userId);
+
     // Vérifier que l'utilisateur existe
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(userId) }
+      where: { id: userId }
     });
 
     if (!user) {
@@ -69,7 +74,7 @@ export async function POST(request) {
       description,
       price: parseFloat(price),
       category,
-      userId: parseInt(userId),
+      userId,
       imageUrl
     });
 
@@ -79,7 +84,7 @@ export async function POST(request) {
         description,
         price: parseFloat(price),
         category,
-        userId: parseInt(userId),
+        userId,
         imageUrl
       },
       include: {

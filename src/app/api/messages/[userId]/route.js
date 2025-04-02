@@ -79,6 +79,7 @@ export async function GET(request, { params }) {
       senderId: parseInt(message.senderId),
       receiverId: parseInt(message.receiverId),
       status: message.status,
+      adId: message.adId ? parseInt(message.adId) : null,
       sender: {
         ...message.sender,
         id: parseInt(message.sender.id)

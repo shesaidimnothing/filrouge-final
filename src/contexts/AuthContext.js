@@ -14,7 +14,10 @@ export function AuthProvider({ children }) {
       const storedUser = localStorage.getItem('userData');
       if (storedUser) {
         try {
-          setUserState(JSON.parse(storedUser));
+          const userData = JSON.parse(storedUser);
+          setUserState(userData);
+          // Synchroniser avec le cookie
+          document.cookie = `userData=${storedUser}; path=/; max-age=86400`;
         } catch (error) {
           console.error('Erreur de parsing des données utilisateur', error);
         }
@@ -25,9 +28,12 @@ export function AuthProvider({ children }) {
   const updateUser = (userData) => {
     if (typeof window !== 'undefined') {
       if (userData) {
-        localStorage.setItem('userData', JSON.stringify(userData));
+        const userDataString = JSON.stringify(userData);
+        localStorage.setItem('userData', userDataString);
+        document.cookie = `userData=${userDataString}; path=/; max-age=86400`;
       } else {
         localStorage.removeItem('userData');
+        document.cookie = 'userData=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
       }
       setUserState(userData);
     }

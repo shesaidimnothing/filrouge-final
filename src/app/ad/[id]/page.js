@@ -21,11 +21,14 @@ export default function AdPage({ params }) {
   const fetchAdDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/ads/${adId}`);
+      const response = await fetch(`/api/ads/${adId}`, {
+        credentials: 'include',
+      });
       if (!response.ok) {
         throw new Error('Erreur lors du chargement de l\'annonce');
       }
       const data = await response.json();
+      console.log('Détails de l\'annonce:', data);
       setAd(data);
     } catch (error) {
       console.error('Erreur:', error);
@@ -37,32 +40,55 @@ export default function AdPage({ params }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user || !message.trim() || !ad) return;
+    if (!user || !message.trim() || !ad) {
+      console.log('Validation échouée:', { user, message: message.trim(), ad });
+      return;
+    }
 
     try {
-      const response = await fetch('/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: message,
-          receiverId: ad.userId,
-          adId: ad.id
-        }),
+      // S'assurer que l'utilisateur est connecté et a un ID
+      if (!user.id) {
+        console.log('Utilisateur non authentifié:', user);
+        throw new Error('Utilisateur non authentifié');
+      }
+
+      const messageData = {
+        content: message.trim(),
+        receiverId: parseInt(ad.userId),
+        adId: parseInt(ad.id)
+      };
+
+      console.log('Envoi du message avec les données:', {
+        ...messageData,
+        currentUser: user
       });
 
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(messageData),
+      });
+
+      const responseData = await response.json();
+      console.log('Réponse du serveur:', responseData);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors de l\'envoi du message');
+        console.error('Erreur serveur:', responseData);
+        throw new Error(responseData.error || 'Erreur lors de l\'envoi du message');
       }
+
+      console.log('Message envoyé avec succès:', responseData);
 
       setMessage('');
       setMessageSent(true);
       setError(null);
       setTimeout(() => setMessageSent(false), 3000);
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur détaillée:', error);
       setError(error.message);
       setMessageSent(false);
     }
