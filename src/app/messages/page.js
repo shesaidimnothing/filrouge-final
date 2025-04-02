@@ -14,6 +14,7 @@ function MessagesContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const initialUserId = searchParams.get('userId');
+  const currentUserId = parseInt(user?.id);
 
   useEffect(() => {
     if (user) {
@@ -38,7 +39,10 @@ function MessagesContent() {
         throw new Error('Erreur lors du chargement des conversations');
       }
       const data = await response.json();
-      setConversations(data);
+      const sortedConversations = data.sort((a, b) => 
+        new Date(b.lastMessageDate) - new Date(a.lastMessageDate)
+      );
+      setConversations(sortedConversations);
       setLoading(false);
     } catch (error) {
       console.error('Erreur:', error);
@@ -54,7 +58,10 @@ function MessagesContent() {
         throw new Error('Erreur lors du chargement des messages');
       }
       const data = await response.json();
-      setMessages(data);
+      const sortedMessages = data.sort((a, b) => 
+        new Date(a.createdAt) - new Date(b.createdAt)
+      );
+      setMessages(sortedMessages);
     } catch (error) {
       console.error('Erreur:', error);
       setError(error.message);
@@ -73,7 +80,7 @@ function MessagesContent() {
         },
         body: JSON.stringify({
           content: newMessage,
-          receiverId: selectedUser.userId
+          receiverId: parseInt(selectedUser.userId)
         }),
       });
 
@@ -82,10 +89,14 @@ function MessagesContent() {
       }
 
       const message = await response.json();
-      setMessages(prev => [...prev, message]);
+      const newMessageWithDetails = {
+        ...message,
+        senderId: currentUserId,
+        receiverId: parseInt(selectedUser.userId),
+      };
+      setMessages(prev => [...prev, newMessageWithDetails]);
       setNewMessage('');
       
-      // Rafraîchir les conversations pour mettre à jour les aperçus
       fetchConversations();
     } catch (error) {
       console.error('Erreur:', error);
@@ -181,35 +192,36 @@ function MessagesContent() {
                     </h2>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${
-                          message.senderId === user.id
-                            ? 'justify-end'
-                            : 'justify-start'
-                        }`}
-                      >
+                    {messages.map((message) => {
+                      const isCurrentUserMessage = message.senderId === currentUserId;
+                      return (
                         <div
-                          className={`max-w-[70%] rounded-lg p-3 ${
-                            message.senderId === user.id
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100'
+                          key={message.id}
+                          className={`flex ${
+                            isCurrentUserMessage ? 'justify-end' : 'justify-start'
                           }`}
                         >
-                          <p>{message.content}</p>
                           <div
-                            className={`text-xs mt-1 ${
-                              message.senderId === user.id
-                                ? 'text-blue-100'
-                                : 'text-gray-500'
+                            className={`max-w-[70%] rounded-lg p-3 ${
+                              isCurrentUserMessage
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 text-gray-900'
                             }`}
                           >
-                            {new Date(message.createdAt).toLocaleString()}
+                            <p>{message.content}</p>
+                            <div
+                              className={`text-xs mt-1 ${
+                                isCurrentUserMessage
+                                  ? 'text-blue-100'
+                                  : 'text-gray-500'
+                              }`}
+                            >
+                              {new Date(message.createdAt).toLocaleString()}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   <div className="p-4 border-t">
                     <form onSubmit={handleSendMessage} className="flex gap-2">

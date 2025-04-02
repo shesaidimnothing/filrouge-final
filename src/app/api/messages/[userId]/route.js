@@ -4,8 +4,8 @@ import prisma from '../../../../utils/prisma';
 
 export async function GET(request, { params }) {
   try {
-    // Vérifier l'authentification
-    const cookieStore = cookies();
+    // Vérifier l'authentification de manière asynchrone
+    const cookieStore = await cookies();
     const userDataCookie = cookieStore.get('userData');
     
     if (!userDataCookie) {
@@ -16,8 +16,11 @@ export async function GET(request, { params }) {
     }
 
     const userData = JSON.parse(userDataCookie.value);
-    const currentUserId = userData.id;
-    const otherUserId = parseInt(params.userId);
+    const currentUserId = parseInt(userData.id);
+    
+    // Attendre et récupérer les paramètres de manière asynchrone
+    const resolvedParams = await params;
+    const otherUserId = parseInt(resolvedParams.userId);
 
     // Récupérer les messages entre les deux utilisateurs
     const messages = await prisma.privateMessage.findMany({
@@ -40,11 +43,13 @@ export async function GET(request, { params }) {
       include: {
         sender: {
           select: {
+            id: true,
             name: true,
           },
         },
         receiver: {
           select: {
+            id: true,
             name: true,
           },
         },
@@ -66,7 +71,25 @@ export async function GET(request, { params }) {
       }
     });
 
-    return NextResponse.json(messages);
+    // Formater les messages pour l'affichage
+    const formattedMessages = messages.map(message => ({
+      id: parseInt(message.id),
+      content: message.content,
+      createdAt: message.createdAt,
+      senderId: parseInt(message.senderId),
+      receiverId: parseInt(message.receiverId),
+      status: message.status,
+      sender: {
+        ...message.sender,
+        id: parseInt(message.sender.id)
+      },
+      receiver: {
+        ...message.receiver,
+        id: parseInt(message.receiver.id)
+      }
+    }));
+
+    return NextResponse.json(formattedMessages);
   } catch (error) {
     console.error('Erreur lors de la récupération des messages:', error);
     return NextResponse.json(
