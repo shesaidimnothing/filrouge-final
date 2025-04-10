@@ -22,7 +22,7 @@ export default function Navbar() {
           <div className="flex justify-between h-20">
             <div className="flex items-center gap-12">
               <Link href="/" className="flex-shrink-0">
-                <span className="text-xl font-light tracking-wide">PROJET FIL ROUGE</span>
+                <span className="text-xl font-light tracking-wide">REBUY-R</span>
               </Link>
               <div className="hidden md:flex items-center space-x-8">
                 <Link href="/about" className="hover-link text-sm">
@@ -85,14 +85,6 @@ export default function Navbar() {
                   </Link>
                 </div>
               )}
-              <div className="hidden md:block">
-                <Link
-                  href="/contact"
-                  className="text-sm border border-white/20 px-4 py-2 hover:bg-white hover:text-black transition-colors duration-300"
-                >
-                  LET'S TALK
-                </Link>
-              </div>
             </div>
           </div>
         </div>
