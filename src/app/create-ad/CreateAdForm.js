@@ -5,16 +5,19 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 
 const CATEGORIES = [
-  { id: 'immobilier', name: 'Immobilier' },
-  { id: 'vehicules', name: 'Véhicules' },
-  { id: 'locations', name: 'Locations de vacances' },
-  { id: 'emploi', name: 'Emploi' },
-  { id: 'mode', name: 'Mode' },
-  { id: 'maison', name: 'Maison & Jardin' },
-  { id: 'multimedia', name: 'Multimédia' },
-  { id: 'loisirs', name: 'Loisirs' },
-  { id: 'autres', name: 'Autres' }
+  { id: 'immobilier', name: 'IMMOBILIER' },
+  { id: 'vehicules', name: 'VÉHICULES' },
+  { id: 'locations', name: 'LOCATIONS' },
+  { id: 'emploi', name: 'EMPLOI' },
+  { id: 'mode', name: 'MODE' },
+  { id: 'maison', name: 'MAISON' },
+  { id: 'multimedia', name: 'MULTIMÉDIA' },
+  { id: 'loisirs', name: 'LOISIRS' },
+  { id: 'autres', name: 'AUTRES' }
 ];
+
+const inputClasses = "mt-2 block w-full bg-black border border-white/20 rounded-none px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:border-white/50 transition-colors";
+const labelClasses = "block text-sm font-light tracking-wide text-white/80";
 
 export default function CreateAdForm() {
   const [title, setTitle] = useState('');
@@ -36,11 +39,8 @@ export default function CreateAdForm() {
 
   if (!user) {
     return (
-      <div className="max-w-2xl mx-auto p-6">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4">Redirection vers la page de connexion...</p>
-        </div>
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border border-white/20 border-t-white"></div>
       </div>
     );
   }
@@ -48,7 +48,7 @@ export default function CreateAdForm() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB max
+      if (file.size > 5 * 1024 * 1024) {
         setError('L\'image ne doit pas dépasser 5MB');
         return;
       }
@@ -67,14 +67,7 @@ export default function CreateAdForm() {
       formData.append('file', file);
       formData.append('upload_preset', 'ml_default');
       formData.append('folder', 'samples/ecommerce');
-      formData.append('public_id_prefix', file.name);
       
-      console.log('Tentative d\'upload avec les paramètres:', {
-        upload_preset: 'ml_default',
-        folder: 'samples/ecommerce',
-        filename: file.name
-      });
-
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/dihipijjs/image/upload`,
         {
@@ -84,23 +77,13 @@ export default function CreateAdForm() {
       );
 
       const data = await response.json();
-      console.log('Réponse Cloudinary:', data);
 
       if (!response.ok) {
-        throw new Error(`Erreur Cloudinary: ${data.error?.message || 'Erreur inconnue'}`);
+        throw new Error(data.error?.message || 'Erreur lors de l\'upload');
       }
 
-      if (data.secure_url) {
-        return data.secure_url;
-      } else {
-        throw new Error('URL sécurisée non trouvée dans la réponse');
-      }
+      return data.secure_url;
     } catch (error) {
-      console.error('Détails de l\'erreur:', error);
-      if (error.response) {
-        const errorData = await error.response.json();
-        console.error('Réponse d\'erreur Cloudinary:', errorData);
-      }
       throw new Error(`Erreur lors de l'upload de l'image: ${error.message}`);
     }
   };
@@ -115,32 +98,14 @@ export default function CreateAdForm() {
     try {
       let imageUrl = null;
       if (image) {
-        try {
-          imageUrl = await uploadImageToCloudinary(image);
-          console.log('Image uploadée avec succès:', imageUrl);
-        } catch (uploadError) {
-          console.error('Erreur lors de l\'upload:', uploadError);
-          setError(`Erreur lors de l'upload de l'image: ${uploadError.message}`);
-          setLoading(false);
-          return;
-        }
+        imageUrl = await uploadImageToCloudinary(image);
       }
-
-      console.log('Tentative d\'envoi de la requête à:', '/api/ads');
-      console.log('Données à envoyer:', {
-        title,
-        description,
-        price: parseFloat(price),
-        category,
-        imageUrl
-      });
 
       const response = await fetch('/api/ads', {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
         },
         body: JSON.stringify({
           title,
@@ -151,11 +116,7 @@ export default function CreateAdForm() {
         }),
       });
 
-      console.log('Statut de la réponse:', response.status);
-      console.log('Headers de la réponse:', Object.fromEntries(response.headers.entries()));
-
       const data = await response.json();
-      console.log('Données reçues:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Une erreur est survenue');
@@ -170,19 +131,17 @@ export default function CreateAdForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Créer une nouvelle annonce</h1>
-      
+    <div className="max-w-2xl mx-auto">
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="border border-red-500/50 bg-red-500/10 text-red-500 px-4 py-3 mb-6">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-            Titre de l'annonce
+          <label htmlFor="title" className={labelClasses}>
+            TITRE DE L'ANNONCE
           </label>
           <input
             type="text"
@@ -190,27 +149,27 @@ export default function CreateAdForm() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className={inputClasses}
           />
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-            Description
+          <label htmlFor="description" className={labelClasses}>
+            DESCRIPTION
           </label>
           <textarea
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            rows="4"
             required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            rows="6"
+            className={inputClasses}
           />
         </div>
 
         <div>
-          <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-            Prix (€)
+          <label htmlFor="price" className={labelClasses}>
+            PRIX (€)
           </label>
           <input
             type="number"
@@ -220,65 +179,68 @@ export default function CreateAdForm() {
             required
             min="0"
             step="0.01"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className={inputClasses}
           />
         </div>
 
         <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-            Catégorie
+          <label htmlFor="category" className={labelClasses}>
+            CATÉGORIE
           </label>
           <select
             id="category"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className={inputClasses}
           >
-            <option value="">Sélectionnez une catégorie</option>
-            {CATEGORIES.map(category => (
-              <option key={category.id} value={category.id}>
-                {category.name}
+            <option value="">Sélectionner une catégorie</option>
+            {CATEGORIES.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
               </option>
             ))}
           </select>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Image</label>
-          <div className="mt-1 flex items-center">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="block w-full text-sm text-gray-500
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-md file:border-0
-                file:text-sm file:font-semibold
-                file:bg-blue-50 file:text-blue-700
-                hover:file:bg-blue-100"
-            />
+          <label htmlFor="image" className={labelClasses}>
+            IMAGE
+          </label>
+          <input
+            type="file"
+            id="image"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+          />
+          <div 
+            onClick={() => document.getElementById('image').click()}
+            className="mt-2 border border-dashed border-white/20 p-8 text-center cursor-pointer hover:border-white/40 transition-colors"
+          >
+            {imagePreview ? (
+              <img src={imagePreview} alt="Aperçu" className="max-h-48 mx-auto" />
+            ) : (
+              <div className="text-white/60">
+                Cliquez pour ajouter une image
+              </div>
+            )}
           </div>
-          {imagePreview && (
-            <div className="mt-2">
-              <img
-                src={imagePreview}
-                alt="Aperçu"
-                className="h-32 w-auto object-cover rounded-lg"
-              />
-            </div>
-          )}
-          <p className="mt-1 text-sm text-gray-500">
-            PNG, JPG, GIF jusqu'à 5MB
-          </p>
         </div>
-        
+
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50"
+          className="w-full border border-white/20 px-8 py-4 text-sm hover:bg-white hover:text-black transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Création en cours...' : 'Créer l\'annonce'}
+          {loading ? (
+            <span className="flex items-center justify-center">
+              <span className="animate-spin rounded-full h-4 w-4 border border-b-2 border-white/20 mr-2"></span>
+              PUBLICATION EN COURS...
+            </span>
+          ) : (
+            'PUBLIER L\'ANNONCE'
+          )}
         </button>
       </form>
     </div>

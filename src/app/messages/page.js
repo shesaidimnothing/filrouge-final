@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSearchParams } from 'next/navigation';
+import PageLayout from '../../components/PageLayout';
 
 function MessagesContent() {
   const [conversations, setConversations] = useState([]);
@@ -36,9 +37,6 @@ function MessagesContent() {
     try {
       const response = await fetch('/api/messages/conversations', {
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        }
       });
       if (!response.ok) {
         throw new Error('Erreur lors du chargement des conversations');
@@ -50,7 +48,6 @@ function MessagesContent() {
       setConversations(sortedConversations);
       setLoading(false);
     } catch (error) {
-      console.error('Erreur:', error);
       setError(error.message);
       setLoading(false);
     }
@@ -60,9 +57,6 @@ function MessagesContent() {
     try {
       const response = await fetch(`/api/messages/${otherUserId}`, {
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        }
       });
       if (!response.ok) {
         throw new Error('Erreur lors du chargement des messages');
@@ -73,7 +67,6 @@ function MessagesContent() {
       );
       setMessages(sortedMessages);
     } catch (error) {
-      console.error('Erreur:', error);
       setError(error.message);
     }
   };
@@ -83,13 +76,11 @@ function MessagesContent() {
     if (!user || !newMessage.trim() || !selectedUser) return;
 
     try {
-      // Trouver le dernier message pour obtenir l'adId
       const lastMessage = messages[messages.length - 1];
       if (!lastMessage) {
         throw new Error('Aucun message trouvé dans cette conversation');
       }
 
-      // Si l'adId n'est pas disponible, on envoie le message sans adId
       const messageData = {
         content: newMessage,
         receiverId: parseInt(selectedUser.userId),
@@ -121,7 +112,6 @@ function MessagesContent() {
       
       fetchConversations();
     } catch (error) {
-      console.error('Erreur:', error);
       setError(error.message);
     }
   };
@@ -133,145 +123,126 @@ function MessagesContent() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-100 py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            Veuillez vous connecter pour accéder à vos messages.
-          </div>
-        </div>
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div className="text-white/60">Veuillez vous connecter pour accéder à vos messages.</div>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          </div>
-        </div>
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border border-white/20 border-t-white"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-100 py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center text-red-600">{error}</div>
-        </div>
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div className="text-red-500">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="container mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="grid grid-cols-3 min-h-[600px]">
-            {/* Liste des conversations */}
-            <div className="col-span-1 border-r">
-              <div className="p-4 border-b">
-                <h2 className="text-lg font-semibold">Conversations</h2>
-              </div>
-              <div className="overflow-y-auto h-[calc(600px-4rem)]">
-                {conversations.length === 0 ? (
-                  <div className="p-4 text-center text-gray-500">
-                    Aucune conversation
-                  </div>
-                ) : (
-                  conversations.map((conversation) => (
-                    <div
-                      key={conversation.userId}
-                      onClick={() => handleUserSelect(conversation)}
-                      className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${
-                        selectedUser?.userId === conversation.userId
-                          ? 'bg-blue-50'
-                          : ''
-                      }`}
-                    >
-                      <div className="font-medium">{conversation.userName}</div>
-                      <div className="text-sm text-gray-500 truncate">
-                        {conversation.lastMessage}
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        {new Date(conversation.lastMessageDate).toLocaleDateString()}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Zone de messages */}
-            <div className="col-span-2 flex flex-col">
-              {selectedUser ? (
-                <>
-                  <div className="p-4 border-b">
-                    <h2 className="text-lg font-semibold">
-                      Discussion avec {selectedUser.userName}
-                    </h2>
-                  </div>
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {messages.map((message) => {
-                      const isCurrentUserMessage = message.senderId === currentUserId;
-                      return (
-                        <div
-                          key={message.id}
-                          className={`flex ${
-                            isCurrentUserMessage ? 'justify-end' : 'justify-start'
-                          }`}
-                        >
-                          <div
-                            className={`max-w-[70%] rounded-lg p-3 ${
-                              isCurrentUserMessage
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-900'
-                            }`}
-                          >
-                            <p>{message.content}</p>
-                            <div
-                              className={`text-xs mt-1 ${
-                                isCurrentUserMessage
-                                  ? 'text-blue-100'
-                                  : 'text-gray-500'
-                              }`}
-                            >
-                              {new Date(message.createdAt).toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="p-4 border-t">
-                    <form onSubmit={handleSendMessage} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        className="flex-1 border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Votre message..."
-                        required
-                      />
-                      <button
-                        type="submit"
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        Envoyer
-                      </button>
-                    </form>
-                  </div>
-                </>
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  Sélectionnez une conversation pour commencer à discuter
-                </div>
-              )}
-            </div>
-          </div>
+    <div className="grid grid-cols-3 min-h-[600px] border border-white/10">
+      {/* Liste des conversations */}
+      <div className="col-span-1 border-r border-white/10">
+        <div className="p-4 border-b border-white/10">
+          <h2 className="text-sm font-light tracking-wide">CONVERSATIONS</h2>
         </div>
+        <div className="overflow-y-auto h-[calc(600px-4rem)]">
+          {conversations.length === 0 ? (
+            <div className="p-4 text-center text-white/60">
+              Aucune conversation
+            </div>
+          ) : (
+            conversations.map((conversation) => (
+              <div
+                key={conversation.userId}
+                onClick={() => handleUserSelect(conversation)}
+                className={`p-4 border-b border-white/10 cursor-pointer transition-colors ${
+                  selectedUser?.userId === conversation.userId
+                    ? 'bg-white/5'
+                    : 'hover:bg-white/5'
+                }`}
+              >
+                <div className="font-light">{conversation.userName}</div>
+                <div className="text-sm text-white/60 truncate mt-1">
+                  {conversation.lastMessage}
+                </div>
+                <div className="text-xs text-white/40 mt-1">
+                  {new Date(conversation.lastMessageDate).toLocaleDateString('fr-FR', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Zone des messages */}
+      <div className="col-span-2 flex flex-col">
+        {selectedUser ? (
+          <>
+            <div className="p-4 border-b border-white/10">
+              <h3 className="text-sm font-light tracking-wide">
+                CONVERSATION AVEC {selectedUser.userName.toUpperCase()}
+              </h3>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${
+                    message.senderId === currentUserId ? 'justify-end' : 'justify-start'
+                  }`}
+                >
+                  <div
+                    className={`max-w-[70%] p-3 ${
+                      message.senderId === currentUserId
+                        ? 'bg-white/10'
+                        : 'bg-white/5'
+                    }`}
+                  >
+                    <p className="text-sm">{message.content}</p>
+                    <p className="text-xs text-white/40 mt-1">
+                      {new Date(message.createdAt).toLocaleTimeString('fr-FR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <form onSubmit={handleSendMessage} className="p-4 border-t border-white/10">
+              <div className="flex gap-4">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Votre message..."
+                  className="flex-1 bg-black border border-white/20 p-3 text-sm focus:outline-none focus:border-white/50 transition-colors"
+                />
+                <button
+                  type="submit"
+                  className="border border-white/20 px-6 text-sm hover:bg-white hover:text-black transition-colors duration-300"
+                >
+                  ENVOYER
+                </button>
+              </div>
+            </form>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-white/60">
+            Sélectionnez une conversation
+          </div>
+        )}
       </div>
     </div>
   );
@@ -279,16 +250,11 @@ function MessagesContent() {
 
 export default function MessagesPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-100 py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          </div>
-        </div>
-      </div>
-    }>
+    <PageLayout
+      title="MESSAGES"
+      subtitle="Gérez vos conversations avec les autres utilisateurs"
+    >
       <MessagesContent />
-    </Suspense>
+    </PageLayout>
   );
 }

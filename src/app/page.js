@@ -45,89 +45,92 @@ export default function Home() {
 
   return (
     <PageTransition>
-      <div>
+      <div className="bg-black text-white min-h-screen pt-32">
         {/* Bannière principale */}
         <motion.div 
-          className="bg-gray-100 py-8"
+          className="border-b border-white/30"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="bg-peach-100 rounded-lg p-8 relative overflow-hidden">
-              <div className="relative z-10">
-                <h2 className="text-2xl font-bold mb-4">C'est le moment de vendre</h2>
-                <Link
-                  href="/create-ad"
-                  className="inline-block bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
-                >
-                  Déposer une annonce
-                </Link>
-              </div>
-              <div className="absolute right-0 top-0 h-full w-1/3">
-                {/* Élément décoratif */}
-                <div className="absolute right-0 top-0 h-24 w-24 bg-blue-200 rounded-full transform translate-x-1/2 -translate-y-1/2" />
-              </div>
+          <div className="max-w-[1800px] mx-auto px-6 lg:px-12 py-20">
+            <div className="max-w-3xl">
+              <h1 className="heading-xl mb-8">Trouvez ce que vous cherchez.</h1>
+              <p className="text-xl font-light text-white/80 mb-8">
+                Une plateforme minimaliste pour vos annonces, conçue pour une expérience simple et efficace.
+              </p>
+              <Link
+                href="/create-ad"
+                className="inline-block border border-white/20 px-8 py-4 text-sm hover:bg-white hover:text-black transition-colors duration-300"
+              >
+                DÉPOSER UNE ANNONCE
+              </Link>
             </div>
           </div>
         </motion.div>
 
-        {/* Section Tendances */}
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <h2 className="text-xl font-semibold mb-4">Tendance en ce moment</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-gray-50 rounded-lg p-4 hover:shadow-lg transition-shadow">
-              <h3 className="font-semibold">Idées cadeaux</h3>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4 hover:shadow-lg transition-shadow">
-              <h3 className="font-semibold">Équipements sportifs</h3>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4 hover:shadow-lg transition-shadow">
-              <h3 className="font-semibold">High-Tech</h3>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4 hover:shadow-lg transition-shadow">
-              <h3 className="font-semibold">Maison</h3>
-            </div>
-          </div>
-        </div>
-
-        {/* Section Top catégories */}
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <h2 className="text-xl font-semibold mb-4">Top catégories</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <Link href="/category/vetements" className="group">
-              <div className="relative rounded-lg overflow-hidden aspect-square">
-                <img src="/images/vetements.jpg" alt="Vêtements" className="w-full h-full object-cover" />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                  <span className="text-white font-medium">Vêtements</span>
+        {/* Section Catégories Principales */}
+        <div className="border-b border-white/30">
+          <div className="max-w-[1800px] mx-auto px-6 lg:px-12 py-16">
+            <h2 className="text-xl font-light mb-8 tracking-wide">CATÉGORIES PRINCIPALES</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+              <Link href="/category/immobilier" className="group">
+                <div className="aspect-[4/3] relative overflow-hidden border border-white/10 hover:border-white/30 transition-colors">
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h3 className="text-sm tracking-wide font-light">IMMOBILIER</h3>
+                  </div>
                 </div>
-              </div>
-            </Link>
-            {/* Répéter pour les autres catégories */}
+              </Link>
+              <Link href="/category/vehicules" className="group">
+                <div className="aspect-[4/3] relative overflow-hidden border border-white/10 hover:border-white/30 transition-colors">
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h3 className="text-sm tracking-wide font-light">VÉHICULES</h3>
+                  </div>
+                </div>
+              </Link>
+              <Link href="/category/mode" className="group">
+                <div className="aspect-[4/3] relative overflow-hidden border border-white/10 hover:border-white/30 transition-colors">
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h3 className="text-sm tracking-wide font-light">MODE</h3>
+                  </div>
+                </div>
+              </Link>
+              <Link href="/category/multimedia" className="group">
+                <div className="aspect-[4/3] relative overflow-hidden border border-white/10 hover:border-white/30 transition-colors">
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h3 className="text-sm tracking-wide font-light">MULTIMÉDIA</h3>
+                  </div>
+                </div>
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Section Annonces récentes */}
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <h2 className="text-xl font-semibold mb-4">Annonces récentes</h2>
+        <div className="max-w-[1000px] mx-auto px-6 lg:px-12 py-20">
+          <h2 className="text-xl font-light mb-8 tracking-wide">ANNONCES RÉCENTES</h2>
           {isLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border border-white/20 border-t-white"></div>
             </div>
           ) : ads.length > 0 ? (
             <motion.div
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+              className="grid grid-cols-1 gap-8"
             >
               {ads.map((ad) => (
                 <AdCard key={ad.id} ad={ad} />
               ))}
             </motion.div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              Aucune annonce disponible pour le moment
+            <div className="text-center py-12 text-white/60 font-light tracking-wide">
+              AUCUNE ANNONCE DISPONIBLE
             </div>
           )}
         </div>

@@ -1,8 +1,20 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { motion } from 'framer-motion';
+import PageTransition from '../../components/animations/PageTransition';
+import AdCard from '../../components/AdCard';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
 
 function SearchContent() {
   const [results, setResults] = useState([]);
@@ -31,47 +43,44 @@ function SearchContent() {
     fetchResults();
   }, [query]);
 
-  if (loading) return <div className="text-center py-10">Recherche en cours...</div>;
-
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">
-        Résultats pour "{query || ''}"
-      </h1>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {results.map((ad) => (
-          <Link key={ad.id} href={`/ad/${ad.id}`}>
-            <div className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="p-4">
-                <h3 className="font-medium text-lg mb-2">{ad.title}</h3>
-                <p className="text-gray-600 text-sm mb-2 line-clamp-2">
-                  {ad.description}
-                </p>
-                <p className="text-lg font-bold">{ad.price.toFixed(2)} €</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  Publié par {ad.user.name}
-                </p>
-              </div>
+    <PageTransition>
+      <div className="bg-black text-white min-h-screen pt-32">
+        <div className="max-w-[1000px] mx-auto px-6 lg:px-12 py-20">
+          <h1 className="text-xl font-light mb-8 tracking-wide">
+            RÉSULTATS POUR "{query || ''}"
+          </h1>
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border border-white/20 border-t-white"></div>
             </div>
-          </Link>
-        ))}
+          ) : results.length > 0 ? (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 gap-8"
+            >
+              {results.map((ad) => (
+                <AdCard key={ad.id} ad={ad} />
+              ))}
+            </motion.div>
+          ) : (
+            <div className="text-center py-12 text-white/60 font-light tracking-wide">
+              AUCUNE ANNONCE TROUVÉE
+            </div>
+          )}
+        </div>
       </div>
-
-      {results.length === 0 && (
-        <p className="text-center text-gray-500 py-10">
-          Aucune annonce trouvée pour cette recherche
-        </p>
-      )}
-    </div>
+    </PageTransition>
   );
 }
 
 export default function SearchPage() {
   return (
     <Suspense fallback={
-      <div className="text-center py-10">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border border-white/20 border-t-white"></div>
       </div>
     }>
       <SearchContent />
