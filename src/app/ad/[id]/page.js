@@ -47,8 +47,8 @@ export default function AdPage({ params }) {
         },
         body: JSON.stringify({
           adId: ad.id,
-          message,
-          recipientId: ad.userId,
+          content: message,
+          receiverId: ad.userId,
         }),
       });
 

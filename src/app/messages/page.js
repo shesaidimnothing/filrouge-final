@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSearchParams } from 'next/navigation';
 import PageLayout from '../../components/PageLayout';
@@ -250,11 +250,14 @@ function MessagesContent() {
 
 export default function MessagesPage() {
   return (
-    <PageLayout
-      title="MESSAGES"
-      subtitle="Gérez vos conversations avec les autres utilisateurs"
-    >
-      <MessagesContent />
+    <PageLayout>
+      <Suspense fallback={
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border border-white/20 border-t-white"></div>
+        </div>
+      }>
+        <MessagesContent />
+      </Suspense>
     </PageLayout>
   );
 }
