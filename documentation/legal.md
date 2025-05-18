@@ -1,11 +1,11 @@
 # Conditions Générales d'Utilisation et Mentions Légales
 
 ## 1. Informations Légales
-- Nom de l'entreprise : [Nom de l'entreprise]
-- Forme juridique : [Forme juridique]
-- Siège social : [Adresse]
-- Numéro SIRET : [Numéro SIRET]
-- Directeur de la publication : [Nom du directeur]
+- Nom de l'entreprise : REBUY-R
+- Forme juridique : COMMERCE
+- Siège social : adresse générique
+- Numéro SIRET : a venir
+- Directeur de la publication : Hugo Pottier
 
 ## 2. Propriété Intellectuelle
 L'ensemble des éléments constituant le site (textes, graphismes, logiciels, photographies, images, vidéos, sons, plans, logos, marques, etc.) sont la propriété exclusive de [Nom de l'entreprise] ou de ses partenaires. Toute reproduction, représentation, modification, publication, adaptation de tout ou partie des éléments du site est interdite.
