@@ -78,9 +78,16 @@ export async function POST(request) {
       );
     }
 
-    // Connexion réussie - enregistrer la tentative et nettoyer les anciennes
+    // Connexion réussie - enregistrer la tentative et nettoyer TOUTES les anciennes tentatives
     await recordLoginAttempt(email, true, ipAddress, userAgent);
-    await clearLoginAttempts(email);
+    
+    // Nettoyer toutes les tentatives échouées pour cet email
+    await prisma.loginAttempt.deleteMany({
+      where: {
+        email,
+        success: false
+      }
+    });
 
     const { password: _, ...userWithoutPassword } = user;
     return new NextResponse(

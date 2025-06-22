@@ -27,6 +27,17 @@ export async function checkLoginAttempts(email, ipAddress = null, userAgent = nu
       };
     }
 
+    // Si le blocage est expiré, nettoyer les anciennes tentatives échouées
+    await prisma.loginAttempt.deleteMany({
+      where: {
+        email,
+        success: false,
+        createdAt: {
+          lt: new Date(Date.now() - BLOCK_DURATION_MINUTES * 60 * 1000)
+        }
+      }
+    });
+
     // Compter les tentatives échouées récentes (dernières 30 minutes)
     const recentFailedAttempts = await prisma.loginAttempt.count({
       where: {
