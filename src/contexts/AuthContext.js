@@ -50,14 +50,28 @@ export function AuthProvider({ children }) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de la connexion');
+        // Créer une erreur avec les informations supplémentaires
+        const error = new Error(data.error || 'Erreur lors de la connexion');
+        
+        // Ajouter les informations de tentatives restantes
+        if (data.remainingAttempts !== undefined) {
+          error.remainingAttempts = data.remainingAttempts;
+        }
+        
+        // Ajouter les informations de blocage
+        if (data.blocked) {
+          error.blocked = true;
+          error.remainingTime = data.remainingTime;
+        }
+        
+        throw error;
       }
 
       updateUser(data.user);
       return true;
     } catch (error) {
       console.error('Erreur de connexion:', error);
-      return false;
+      throw error; // Propager l'erreur pour que le composant puisse la gérer
     }
   };
 
