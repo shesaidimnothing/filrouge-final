@@ -162,21 +162,6 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Informations sur le traitement des données */}
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-            <h4 className="text-sm font-medium text-blue-800 mb-2">
-              Informations sur le traitement de vos données
-            </h4>
-            <ul className="text-xs text-blue-700 space-y-1">
-              <li>• Responsable du traitement : REBUY-R</li>
-              <li>• Finalité : Gestion de votre compte et amélioration de nos services</li>
-              <li>• Base légale : Exécution du contrat et consentement</li>
-              <li>• Durée de conservation : 3 ans après la dernière activité</li>
-              <li>• Vos droits : Accès, rectification, effacement, portabilité, opposition</li>
-              <li>• Contact DPO : dpo@rebuy-r.com</li>
-            </ul>
-          </div>
-
           <div>
             <button
               type="submit"
